@@ -101,6 +101,8 @@ export default class WebGLApp {
     const canvas = renderer.domElement
     this.canvas = canvas
 
+    const orthCamera = new THREE.OrthographicCamera(-this.sizeProvider.width/2,this.sizeProvider.width/2, -this.sizeProvider.height/2,this.sizeProvider.height/2);
+
     const camera = new THREE.PerspectiveCamera(45, this.aspect, 0.01, 100)
     camera.position.set(0, 0, 4)
     this.camera = camera

@@ -14,7 +14,7 @@ const webgl = new Experience({
   orbitControls: true,
   stats: isDebug,
   gui: true,
-  postprocessing: true,
+  postprocessing: false,
 })
 
 if (webgl.gui) {
@@ -35,18 +35,19 @@ assets.loadQueued().then(() => {
   /**
    * Camera
    */
-  webgl.camera.fov = 30
+  webgl.camera.fov = 20
   webgl.camera.near = 0.1
-  webgl.camera.far = 20
+  webgl.camera.far = 100
   webgl.camera.updateProjectionMatrix()
-  webgl.camera.position.set(-1, 0.65, 0.8).normalize().multiplyScalar(5)
-  webgl.orbitControls!.target.y = 0.25
-  webgl.orbitControls!.minDistance = 3
-  webgl.orbitControls!.maxDistance = 8
-  webgl.orbitControls!.minPolarAngle = 0
-  webgl.orbitControls!.maxPolarAngle = Math.PI / 2 - 0.3
+  webgl.camera.position.set(0, 0, 1).normalize().multiplyScalar(10)
+  // webgl.orbitControls!.target.y = 0.25
+  // webgl.orbitControls!.minDistance = 3
+  // webgl.orbitControls!.maxDistance = 8
+  // webgl.orbitControls!.minPolarAngle = 0
+  // webgl.orbitControls!.maxPolarAngle = Math.PI / 2 - 0.3
   webgl.orbitControls!.enablePan = false
   webgl.orbitControls!.enableDamping = true
+  webgl.orbitControls!.enableZoom = false
 
   if (webgl.gui) {
     const clearColor = new THREE.Color(0, 0, 0)
@@ -97,7 +98,7 @@ assets.loadQueued().then(() => {
   mesh.castShadow = true
   mesh.receiveShadow = true
   mesh.customDepthMaterial = depthMaterial
-  mesh.rotation.x = -Math.PI / 2
+  // mesh.rotation.x = -Math.PI / 2
   mesh.scale.set(3, 3, 3)
   webgl.scene.add(mesh)
 
@@ -131,6 +132,13 @@ assets.loadQueued().then(() => {
     if (event.key === ' ') {
       webgl.isAnimationActive = !webgl.isAnimationActive
     }
+  })
+
+   /**
+   * Toggle animation
+   */
+   window.addEventListener('scroll', () => {
+    uniforms.uScrollX.value += window.scrollX/100000
   })
 
   /**
@@ -175,6 +183,9 @@ function createMaterial() {
     uLimPower: {
       value: 0.8,
     },
+    uScrollX:{
+      value:0.0,
+    }
   }
   if (webgl.gui) {
     webgl.gui
@@ -280,6 +291,7 @@ function createMaterial() {
         #include <common>
 
         uniform float uTime;
+        uniform float uScrollX;
         uniform vec2 uSubdivision;
         uniform float uNumOctaves;
         uniform float uFrequency1;
@@ -341,13 +353,18 @@ function createMaterial() {
           out float values[MAX_OCTAVES]
         ) {
           vec2 q = vec2(
-            fbm(p + vec2(0.0, 0.0) + (0.1 * uTime), 0.5, 0.5, values),
-            fbm(p + vec2(5.2, 1.3), 0.5, sin(uTime * 3.0) * 0.5, values)
+            // fbm(p + vec2(0.0, 0.0) + (0.1 * uTime), 0.5, 0.5, values),
+            fbm(p + vec2(0.0, 0.0) + (0.1 * uScrollX), 0.5, 0.5, values),
+            // fbm(p + vec2(5.2, 1.3), 0.5, sin(uTime * 3.0) * 0.5, values)
+            fbm(p + vec2(5.2, 1.3), 0.5, sin(uScrollX * 3.0) * 0.5, values)
           );
           
           vec2 r = vec2(
-            fbm(p + 4.0 * q + vec2(1.7, 9.2) + (0.2 * uTime), - 0.3, 0.5, values),
-            fbm(p + 7.0 * q + vec2(8.3, 2.8), - 0.3, cos(uTime * 3.75) * 0.5, values)
+            // fbm(p + 4.0 * q + vec2(1.7, 9.2) + (0.2 * uTime), - 0.3, 0.5, values),
+            // fbm(p + 7.0 * q + vec2(8.3, 2.8), - 0.3, cos(uTime * 3.75) * 0.5, values)
+            fbm(p + 4.0 * q + vec2(1.7, 9.2) + (0.2 * uScrollX), - 0.3, 0.5, values),
+            fbm(p + 7.0 * q + vec2(8.3, 2.8), - 0.3, cos(uScrollX * 3.75) * 0.5, values)
+
           );
           
           float f = fbm(p + uFrequency2 * r, amplitude, uAmplitude2, values);
@@ -357,7 +374,8 @@ function createMaterial() {
         }
 
         vec3 getPosition(vec3 pos, out float values[MAX_OCTAVES]) {
-          vec2 p = pos.xy + vec2(0.0, 0.15 * uTime).yx;
+          // vec2 p = pos.xy + vec2(0.0, 0.15 * uTime).yx;
+          vec2 p = pos.xy + vec2(0.0, 0.15 * uScrollX).yx;
           p *= uFrequency1;
           pos.z = domainWarp(p, uAmplitude1, values);
           return pos;
